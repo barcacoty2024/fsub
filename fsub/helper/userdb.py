@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+
 from fsub import DATABASE_URL, DATABASE_NAME, LOGGER
 
 dbclient  = MongoClient(DATABASE_URL)
@@ -9,7 +10,7 @@ user_data = database['users']
 
 def add_user(user_id: int):
     found = user_data.find_one({'_id': user_id})
-    LOGGER.info(f"{user_id} terdaftar di database.")
+    LOGGER.info(f"{user_id} sudah terdaftar di database.")
     if not found:
         user_data.insert_one({'_id': user_id})
         LOGGER.info(f"{user_id} ditambahkan ke database.")

@@ -4,10 +4,11 @@ from pyrogram import Client, filters
 from pyrogram.errors import FloodWait, MessageEmpty
 from pyrogram.types import Message, InlineKeyboardMarkup
 
-from fsub import ADMINS, CHANNEL_DB, PROTECT_CONTENT, LOGGER
-from fsub.helper.func import str_decoder, fsub_subscriber
-from fsub.helper.database import add_user, full_user
+from fsub import ADMINS, CHANNEL_DB, PROTECT_CONTENT
 from fsub.helper.button import fsub_button
+from fsub.helper.filters import fsub_subscriber
+from fsub.helper.text import str_decoder
+from fsub.helper.userdb import add_user, full_user
 
 START_STRING = \
     "**Bot aktif dan berfungsi. " \
@@ -24,29 +25,27 @@ member_fsub = filters.create(fsub_subscriber)
 
 @Client.on_message(filters.command("start") & filters.private & ~member_fsub)
 async def start_command_0(client, message):
-    user_id      = message.chat.id
-    buttons      = fsub_button(client, message)
-    reply_markup = InlineKeyboardMarkup(buttons)
+    user_id = message.chat.id
+    buttons = fsub_button(client, message)
     if len(message.text) > 7:
         add_user(user_id)
-        await message.reply(FSUB_STRING, reply_markup=reply_markup)
+        await message.reply(FSUB_STRING, reply_markup=InlineKeyboardMarkup(buttons))
         return await message.delete()
     else:
         add_user(user_id)
-        return await message.reply(START_STRING, reply_markup=reply_markup, quote=True)
+        return await message.reply(START_STRING, reply_markup=InlineKeyboardMarkup(buttons), quote=True)
 
 
 @Client.on_message(filters.command("start") & filters.private & member_fsub)
 async def start_command_1(client, message):
-    user_id      = message.chat.id
-    buttons      = fsub_button(client, message)
-    reply_markup = InlineKeyboardMarkup(buttons)
+    user_id = message.chat.id
+    buttons = fsub_button(client, message)
     add_user(user_id)
     text = message.text
     if len(text) > 7:
         processing = await message.reply("...", quote=True)
         base64_string = text.split(" ", 1)[1]
-        string = str_decoder(base64_string)
+        string   = str_decoder(base64_string)
         argument = string.split("-")
         if len(argument) == 3:
             start = int(int(argument[1]) / abs(CHANNEL_DB))
@@ -74,7 +73,7 @@ async def start_command_1(client, message):
                 pass
         await message.delete() ; return await processing.delete()
     else:
-        await message.reply(START_STRING, reply_markup=reply_markup, quote=True)
+        await message.reply(START_STRING, reply_markup=InlineKeyboardMarkup(buttons), quote=True)
 
 
 @Client.on_message(filters.command("restart") & filters.private & filters.user(ADMINS))
@@ -83,5 +82,5 @@ async def restart_command(client, message):
     processing = await message.reply("Memulai ulang...", quote=True)
     with open('restart.txt', 'w') as f:
         f.write(f"{message.chat.id}\n{processing.id}")
-    LOGGER.info("Memulai ulang bot...")
+    client.bot_logger.info("Memulai ulang bot...")
     subprocess.run(["python", "-m", "fsub"])
